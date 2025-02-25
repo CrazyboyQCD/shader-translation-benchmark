@@ -11,17 +11,25 @@ jobs:
     env:
       RUST_BACKTRACE: 1
       RUST_VERSION: 1.85.0
+
     steps:
       - name: checkout
         uses: actions/checkout@v2
         with:
           submodules: "true"
-      - uses: actions-rs/toolchain@v1
+
+      - name: set up rust
+        uses: actions-rs/toolchain@v1
         with:
           profile: minimal
           toolchain: stable
           override: true
+
       - name: build
         uses: ashutoshvarma/action-cmake-build@master
+
       - name: check visuals
         run: cd visual && cargo check
+
+      - name: run benchmark
+        run: ./build/bench
