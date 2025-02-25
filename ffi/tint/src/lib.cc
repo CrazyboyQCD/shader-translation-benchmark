@@ -1,4 +1,4 @@
-#include "tint-ffi.h"
+#include "tint_ffi.h"
 #include <cassert>
 #include <cstring>
 #include <iostream>
