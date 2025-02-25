@@ -10,12 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUST_BACKTRACE: 1
-      RUST_VERSION: 1.53
+      RUST_VERSION: 1.85.0
     steps:
       - name: checkout
         uses: actions/checkout@v2
         with:
-          submodules: 'true'
+          submodules: "true"
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal

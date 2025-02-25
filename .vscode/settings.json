@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "tint_ffi.h": "c",
+        "cstddef": "c"
+    }
+}

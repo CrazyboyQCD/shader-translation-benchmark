@@ -12,5 +12,5 @@ panic = "abort"
 crate-type = ["staticlib"]
 
 [dependencies.naga]
-path = "../../mod/naga"
+version = "24.0.0"
 features = ["glsl-in", "spv-in", "wgsl-in", "spv-out", "wgsl-out", "msl-out", "glsl-out"]

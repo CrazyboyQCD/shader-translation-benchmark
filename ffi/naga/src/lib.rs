@@ -6,8 +6,8 @@ Matches "../naga.h"
 use std::{ffi, os::raw, slice};
 
 pub struct naga_converter_t {
-    glsl_in: naga::front::glsl::Parser,
-    wgsl_in: naga::front::wgsl::Parser,
+    glsl_in: naga::front::glsl::Frontend,
+    wgsl_in: naga::front::wgsl::Frontend,
     validator: naga::valid::Validator,
     spv_out: naga::back::spv::Writer,
     temp_spv: Vec<u32>,
@@ -17,8 +17,8 @@ pub struct naga_converter_t {
 #[no_mangle]
 pub extern "C" fn naga_init() -> *mut naga_converter_t {
     let converter = naga_converter_t {
-        glsl_in: naga::front::glsl::Parser::default(),
-        wgsl_in: naga::front::wgsl::Parser::new(),
+        glsl_in: naga::front::glsl::Frontend::default(),
+        wgsl_in: naga::front::wgsl::Frontend::new(),
         validator: naga::valid::Validator::new(
             naga::valid::ValidationFlags::empty(),
             naga::valid::Capabilities::all(),
@@ -58,7 +58,7 @@ pub unsafe extern "C" fn naga_convert_glsl_to_spirv(
     converter.temp_spv.clear();
     converter
         .spv_out
-        .write(&module, &info, None, &mut converter.temp_spv)
+        .write(&module, &info, None, &None, &mut converter.temp_spv)
         .unwrap();
     converter.temp_spv.len()
 }
@@ -71,7 +71,7 @@ pub unsafe extern "C" fn naga_convert_spirv_to_wgsl(
 ) -> usize {
     let in_options = naga::front::spv::Options::default();
     let spv = slice::from_raw_parts(source, size);
-    let module = naga::front::spv::Parser::new(spv.iter().cloned(), &in_options)
+    let module = naga::front::spv::Frontend::new(spv.iter().cloned(), &in_options)
         .parse()
         .unwrap();
 
@@ -94,7 +94,7 @@ pub unsafe extern "C" fn naga_convert_spirv_to_msl(
 ) -> usize {
     let in_options = naga::front::spv::Options::default();
     let spv = slice::from_raw_parts(source, size);
-    let module = naga::front::spv::Parser::new(spv.iter().cloned(), &in_options)
+    let module = naga::front::spv::Frontend::new(spv.iter().cloned(), &in_options)
         .parse()
         .unwrap();
 
@@ -121,9 +121,13 @@ pub unsafe extern "C" fn naga_convert_wgsl_to_glsl(
     let info = converter.validator.validate(&module).unwrap();
 
     let out_options = naga::back::glsl::Options {
-        version: naga::back::glsl::Version::Embedded(320),
+        version: naga::back::glsl::Version::Embedded {
+            version: 320,
+            is_webgl: false,
+        },
         writer_flags: naga::back::glsl::WriterFlags::empty(),
         binding_map: Default::default(),
+        zero_initialize_workgroup_memory: Default::default(),
     };
     let ep_string = ffi::CStr::from_ptr(entry_point).to_str().unwrap();
     let pipeline_options = naga::back::glsl::PipelineOptions {
@@ -135,6 +139,7 @@ pub unsafe extern "C" fn naga_convert_wgsl_to_glsl(
             naga::ShaderStage::Compute
         },
         entry_point: ep_string.to_string(),
+        multiview: Default::default(),
     };
 
     converter.temp_string.clear();
@@ -144,6 +149,7 @@ pub unsafe extern "C" fn naga_convert_wgsl_to_glsl(
         &info,
         &out_options,
         &pipeline_options,
+        Default::default(),
     )
     .unwrap();
     let _reflection_info = w.write().unwrap();
